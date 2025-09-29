@@ -60,6 +60,6 @@ resource "aws_ecs_service" "bedrock_chatbot_streamlit_service" {
     container_port   = var.container_port
   }
 
-  depends_on = [aws_iam_role_policy_attachment.ecs_task_execution_role_policy, aws_iam_role_policy_attachment.bedrock_attachment]
+  depends_on = [aws_iam_role_policy_attachment.ecs_task_execution_role_policy, aws_iam_role_policy_attachment.bedrock_attachment, aws_alb_listener.alb_listener]
 
 }

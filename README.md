@@ -1,1 +1,2 @@
-# bedrock-chatbot
+# chatbot_infra
+creating chatbot using bedrock model

@@ -7,6 +7,6 @@ output "ecs_repository_url" {
 
 }
 
-output "github_actions_role_arn" {
-  value = module.github_oidc.role_arn
+output "ecs_cluster_name" {
+  value = aws_ecs_cluster.bedrock_ecs_main.name
 }

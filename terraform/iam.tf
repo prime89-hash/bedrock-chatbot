@@ -56,7 +56,8 @@ resource "aws_iam_policy" "bedrock_access_policy" {
           "bedrock:ListModels",
           "bedrock:GetModel",
           "bedrock:DescribeModel",
-          "bedrock:ListFoundationModels"
+          "bedrock:ListFoundationModels",
+          "bedrock:InvokeModelWithResponseStream"
         ]
         Effect   = "Allow"
         Resource = "*"

@@ -13,7 +13,7 @@ resource "aws_ecs_task_definition" "bedrock_chatbot_task" {
   container_definitions = jsonencode([
     {
       name      = "bedrock-chatbot-container"
-      image     = "${aws_ecr_repository.chatbot_repository.repository_url}:latest"
+      image     = "${aws_ecr_repository.chatbot_repository.repository_url}:${var.image_tag}"
       essential = true
       portMappings = [
         {

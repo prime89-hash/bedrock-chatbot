@@ -9,8 +9,8 @@ bedrock_client = boto3.client(
     region_name="us-west-2"
 )
 
-# Model ID (Claude 3.5 Sonnet)
-model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+# Model ID (Claude 3.5 Sonnet v2)
+model_id = "anthropic.claude-3-5-sonnet-20241022-v2:0"
 
 # Function to generate response from Bedrock
 def query_bedrock(language, freeform_text):

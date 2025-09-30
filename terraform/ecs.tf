@@ -10,6 +10,7 @@ resource "aws_ecs_task_definition" "bedrock_chatbot_task" {
   cpu                      = "512"
   memory                   = "1024"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn            = aws_iam_role.ecs_bedrock_task_role.arn
   container_definitions = jsonencode([
     {
       name      = "bedrock-chatbot-container"

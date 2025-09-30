@@ -82,16 +82,6 @@ resource "aws_alb_listener" "alb_listener" {
   protocol          = "HTTP"
 
   default_action {
-    type = "authenticate-cognito"
-
-    authenticate_cognito {
-      user_pool_arn       = aws_cognito_user_pool.bedrock_user_pool.arn
-      user_pool_client_id = aws_cognito_user_pool_client.bedrock_client.id
-      user_pool_domain    = aws_cognito_user_pool_domain.bedrock_domain.domain
-    }
-  }
-
-  default_action {
     type             = "forward"
     target_group_arn = aws_alb_target_group.bedrock_chatbot_tg.arn
   }

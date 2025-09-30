@@ -78,9 +78,11 @@ jobs:
           --services $ECS_SERVICE \
           --region $AWS_REGION
 
-    - name: Get Application URL
+    - name: Get Application URL and Credentials
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
       working-directory: ./terraform
       run: |
-        echo "Application URL: $(terraform output -raw application_url)"
-        echo "Cognito User Pool ID: $(terraform output -raw cognito_user_pool_id)"
+        echo "🌐 Application URL: $(terraform output -raw application_url)"
+        echo "🔑 Login Password: SecurePass123!"
+        echo ""
+        echo "✅ Deployment completed successfully!"

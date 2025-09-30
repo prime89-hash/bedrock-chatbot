@@ -10,6 +10,13 @@ resource "aws_security_group" "alb_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  
   egress {
     from_port   = 0
     to_port     = 0
@@ -76,13 +83,43 @@ resource "aws_alb_target_group" "bedrock_chatbot_tg" {
   }
 }
 
-resource "aws_alb_listener" "alb_listener" {
+# HTTPS listener with Cognito authentication
+resource "aws_alb_listener" "alb_listener_https" {
+  load_balancer_arn = aws_alb.bedrock_alb.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS-1-2-2017-01"
+  certificate_arn   = aws_acm_certificate.bedrock_self_signed.arn
+
+  default_action {
+    type = "authenticate-cognito"
+
+    authenticate_cognito {
+      user_pool_arn       = aws_cognito_user_pool.bedrock_user_pool.arn
+      user_pool_client_id = aws_cognito_user_pool_client.bedrock_client.id
+      user_pool_domain    = aws_cognito_user_pool_domain.bedrock_domain.domain
+    }
+  }
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_alb_target_group.bedrock_chatbot_tg.arn
+  }
+}
+
+# HTTP listener redirects to HTTPS
+resource "aws_alb_listener" "alb_listener_http" {
   load_balancer_arn = aws_alb.bedrock_alb.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
-    type             = "forward"
-    target_group_arn = aws_alb_target_group.bedrock_chatbot_tg.arn
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
   }
 }

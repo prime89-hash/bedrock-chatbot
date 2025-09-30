@@ -75,6 +75,16 @@ jobs:
           TF_VAR_image_tag: ${{ steps.build-image.outputs.image_tag }}
         run: terraform apply -auto-approve
 
+      - name: Get Application URL and Credentials
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.destroy != 'true' }}
+        working-directory: ./terraform
+        run: |
+          echo "🌐 Application URL: $(terraform output -raw application_url)"
+          echo "🔐 Cognito Domain: $(terraform output -raw cognito_domain)"
+          echo "👤 Default User: admin / TempPass123!"
+          echo ""
+          echo "✅ Deployment completed successfully!"
+
       # Run only when manually triggered with input destroy=true
       - name: Terraform Destroy
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.destroy == 'true' }}

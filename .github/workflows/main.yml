@@ -61,7 +61,7 @@ jobs:
         id: build-image
         run: |
           IMAGE_TAG=$(date +%Y%m%d%H%M%S)
-          IMAGE_URI="${{ steps.ecr-login.output.registry }}/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}"
+          IMAGE_URI="${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}"
           echo "IMAGE_URI=${IMAGE_URI}" >> $GITHUB_ENV
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI

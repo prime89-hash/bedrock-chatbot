@@ -48,25 +48,19 @@ resource "aws_iam_policy" "bedrock_access_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
         Action = [
           "bedrock:InvokeModel",
-          "bedrock:InvokeModelWithResponseStream",
-          "bedrock:GetModel",
-          "bedrock:DescribeModel"
-        ]
-        Resource = "arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-sonnet-4-20250514-v1:0"
-      },
-      {
-        Effect = "Allow"
-        Action = [
           "bedrock:ListModels",
+          "bedrock:GetModel",
+          "bedrock:DescribeModel",
           "bedrock:ListFoundationModels"
         ]
+        Effect   = "Allow"
         Resource = "*"
-      }
+      },
     ]
   })
+
 }
 
 resource "aws_iam_role_policy_attachment" "bedrock_attachment" {

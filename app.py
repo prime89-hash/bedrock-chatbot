@@ -1,28 +1,17 @@
-# Import necessary libraries
 import boto3
 import json
 import streamlit as st
-from botocore.config import Config
 
-# Configure boto3 to use a specific retry strategy
-boto_config = Config(
-    retries={
-        'max_attempts': 10,
-        'mode': 'standard'
-    },
-    connect_timeout=10,
-    read_timeout=60
-)
+
 
 # Create Bedrock client
 bedrock_client = boto3.client(
     service_name="bedrock-runtime",
-    region_name="us-west-2",  # Change if your model is in another region
-    config=boto_config
+    region_name="eu-west-2"
 )
 
-# Model ID (Claude Sonnet 4)
-model_id = "anthropic.claude-sonnet-4-20250514-v1:0"
+# Model ID (Amazon Titan)
+model_id = "amazon.titan-text-express-v1"
 
 # Function to generate response from Bedrock
 def query_bedrock(language, freeform_text):
@@ -39,10 +28,10 @@ def query_bedrock(language, freeform_text):
     }
 
     response = bedrock_client.invoke_model(
-        modelId=model_id,
         body=json.dumps(body),
-        contentType="application/json",
-        accept="application/json"
+        modelId=model_id,
+        accept="application/json",
+        contentType="application/json"
     )
 
     result = json.loads(response['body'].read())
@@ -54,12 +43,14 @@ st.title("Bedrock Chatbot ASK ME")
 language = st.sidebar.selectbox("Language", ["english", "spanish"])
 freeform_text = st.sidebar.text_area("What is your question?", max_chars=200)
 
-# Submit Button
+#Submit Button
+
 if st.sidebar.button("Submit"):
-    if freeform_text.strip() != "":
-        with st.spinner("Thinking..."):
+    if freeform_text.strip()!="":
+        with st.spinner("thinking..."):
             output = query_bedrock(language, freeform_text)
         st.success("Done!")
         st.write(output)
     else:
         st.error("Please enter a question.")
+

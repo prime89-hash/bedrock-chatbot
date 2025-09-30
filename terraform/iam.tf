@@ -41,8 +41,8 @@ resource "aws_iam_role" "ecs_bedrock_task_role" {
 }
 
 resource "aws_iam_policy" "bedrock_access_policy" {
-  name        = "BedrockAccessPolicy"
-  description = "Policy to allow ECS task to access Titan model"
+  name        = "ClaudeSonnet4AccessPolicy"
+  description = "Policy to allow ECS task to invoke Claude Sonnet 4"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -55,7 +55,7 @@ resource "aws_iam_policy" "bedrock_access_policy" {
           "bedrock:GetModel",
           "bedrock:DescribeModel"
         ]
-        Resource = "arn:aws:bedrock:${var.aws_region}::model/amazon.titan-text-express-v1"
+        Resource = "arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-sonnet-4-20250514-v1:0"
       },
       {
         Effect = "Allow"
@@ -69,10 +69,10 @@ resource "aws_iam_policy" "bedrock_access_policy" {
   })
 }
 
-
 resource "aws_iam_role_policy_attachment" "bedrock_attachment" {
   role       = aws_iam_role.ecs_bedrock_task_role.name
   policy_arn = aws_iam_policy.bedrock_access_policy.arn
 }
+
 
 

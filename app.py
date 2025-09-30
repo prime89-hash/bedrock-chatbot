@@ -7,7 +7,7 @@ import streamlit as st
 # Create Bedrock client
 bedrock_client = boto3.client(
     service_name="bedrock-runtime",
-    region_name="eu-west-2"
+    region_name="us-west-2"
 )
 
 # Model ID (Amazon Titan)

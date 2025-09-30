@@ -14,7 +14,8 @@ on:
         type: boolean
 
 env:
-  AWS_REGION: eu-west-2
+  AWS_REGION: us-west-2
+#  AWS_REGION: eu-west-2  
   ECR_REPOSITORY: streamlit-bedrock-chatbot
 
 jobs:

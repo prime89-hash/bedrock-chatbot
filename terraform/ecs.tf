@@ -25,14 +25,14 @@ resource "aws_ecs_task_definition" "bedrock_chatbot_task" {
       environment = [
         {
           name  = "BEDROCK_REGION"
-          value = "eu-west-2"
+          value = var.aws_region
         }
       ]
       logConfiguration = {
         logDriver = "awslogs"
         options = {
           "awslogs-group"         = aws_cloudwatch_log_group.bedrock_chatbot_log_group.name
-          "awslogs-region"        = "eu-west-2"
+          "awslogs-region"        = var.aws_region
           "awslogs-stream-prefix" = "ecs"
         }
       }

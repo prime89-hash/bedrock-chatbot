@@ -60,14 +60,17 @@ resource "aws_alb_target_group" "bedrock_chatbot_tg" {
   protocol    = "HTTP"
   vpc_id      = aws_vpc.bedrock_main.id
   target_type = "ip"
+  
   health_check {
-    path                = "/v1/models/default:predict"
+    path                = "/?health=check"
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
     unhealthy_threshold = 2
-    matcher             = "200-399"
+    matcher             = "200"
+    protocol            = "HTTP"
   }
+  
   tags = {
     Name = "bedrock_chatbot_tg"
   }

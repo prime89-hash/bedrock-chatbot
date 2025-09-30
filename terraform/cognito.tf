@@ -38,20 +38,3 @@ resource "random_string" "domain_suffix" {
   special = false
   upper   = false
 }
-
-# Create a default user
-resource "aws_cognito_user_pool_user" "default_user" {
-  user_pool_id = aws_cognito_user_pool.bedrock_user_pool.id
-  username     = "admin"
-
-  attributes = {
-    email          = "admin@example.com"
-    email_verified = true
-  }
-
-  password = "TempPass123!"
-
-  lifecycle {
-    ignore_changes = [password]
-  }
-}

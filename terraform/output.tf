@@ -18,10 +18,9 @@ output "cognito_domain" {
   value = "${aws_cognito_user_pool_domain.bedrock_domain.domain}.auth.${var.aws_region}.amazoncognito.com"
 }
 
-output "default_user_credentials" {
-  description = "Default user credentials"
-  value = "Username: admin, Password: TempPass123!"
-  sensitive = true
+output "user_creation_command" {
+  description = "Command to create a user"
+  value = "aws cognito-idp admin-create-user --user-pool-id ${aws_cognito_user_pool.bedrock_user_pool.id} --username admin --user-attributes Name=email,Value=admin@example.com --temporary-password TempPass123! --region ${var.aws_region}"
 }
 
 output "ecs_repository_url" {

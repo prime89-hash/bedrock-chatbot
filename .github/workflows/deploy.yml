@@ -81,7 +81,8 @@ jobs:
         run: |
           echo "🌐 Application URL: $(terraform output -raw application_url)"
           echo "🔐 Cognito Domain: $(terraform output -raw cognito_domain)"
-          echo "👤 Default User: admin / TempPass123!"
+          echo "👤 Create User Command:"
+          echo "$(terraform output -raw user_creation_command)"
           echo ""
           echo "✅ Deployment completed successfully!"
 

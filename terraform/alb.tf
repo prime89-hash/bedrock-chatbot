@@ -92,6 +92,7 @@ resource "aws_alb_listener" "alb_listener_https" {
   certificate_arn   = aws_acm_certificate.bedrock_self_signed.arn
 
   default_action {
+    order = 1
     type = "authenticate-cognito"
 
     authenticate_cognito {
@@ -101,22 +102,11 @@ resource "aws_alb_listener" "alb_listener_https" {
       on_unauthenticated_request = "authenticate"
     }
   }
-}
 
-# Listener rule to forward after authentication
-resource "aws_alb_listener_rule" "forward_after_auth" {
-  listener_arn = aws_alb_listener.alb_listener_https.arn
-  priority     = 100
-
-  action {
+  default_action {
+    order = 2
     type             = "forward"
     target_group_arn = aws_alb_target_group.bedrock_chatbot_tg.arn
-  }
-
-  condition {
-    path_pattern {
-      values = ["*"]
-    }
   }
 }
 

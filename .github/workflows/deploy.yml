@@ -83,6 +83,42 @@ jobs:
           echo ""
           echo "✅ Deployment completed successfully!"
 
+      - name: Create Default Admin User
+        working-directory: ./terraform
+        run: |
+          USER_POOL_ID=$(terraform output -raw cognito_user_pool_id)
+          
+          # Check if user already exists
+          if aws cognito-idp admin-get-user --user-pool-id $USER_POOL_ID --username admin --region ${{ env.AWS_REGION }} 2>/dev/null; then
+            echo "👤 User 'admin' already exists"
+          else
+            echo "👤 Creating default admin user..."
+            
+            # Create user
+            aws cognito-idp admin-create-user \
+              --user-pool-id $USER_POOL_ID \
+              --username admin \
+              --user-attributes Name=email,Value=admin@example.com Name=email_verified,Value=true \
+              --message-action SUPPRESS \
+              --region ${{ env.AWS_REGION }}
+            
+            # Set permanent password
+            aws cognito-idp admin-set-user-password \
+              --user-pool-id $USER_POOL_ID \
+              --username admin \
+              --password Admin123! \
+              --permanent \
+              --region ${{ env.AWS_REGION }}
+            
+            # Confirm user
+            aws cognito-idp admin-confirm-sign-up \
+              --user-pool-id $USER_POOL_ID \
+              --username admin \
+              --region ${{ env.AWS_REGION }}
+            
+            echo "✅ Default user created: admin / Admin123!"
+          fi
+
   destroy:
     runs-on: [ubuntu-latest]
     if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.destroy == 'true' }}

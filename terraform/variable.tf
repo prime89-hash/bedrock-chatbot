@@ -10,11 +10,10 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
-variable "public_subnet_cidr" {
-  description = "The CIDR block for the public subnet."
+variable "private_subnet_cidr" {
+  description = "The CIDR block for the private subnet."
   type        = list(string)
-  default     = ["10.0.1.0/24", "10.0.2.0/24"]
-
+  default     = ["10.0.3.0/24", "10.0.4.0/24"]
 }
 
 variable "image_tag" {
@@ -23,9 +22,9 @@ variable "image_tag" {
   default     = "latest"
 }
 
-variable "container_port" {
-  description = "The port on which the container will listen."
-  type        = number
-  default     = 8501
+variable "domain_name" {
+  description = "The domain name for SSL certificate"
+  type        = string
+  default     = "example.com"
 }
 

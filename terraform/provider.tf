@@ -18,7 +18,7 @@ terraform {
   backend "s3" {
     bucket         = "my-bedrockchatbot-tf-state"   #  S3 bucket name
     key            = "terraform/state.tfstate"       # Path inside the bucket
-    region         = var.aws_region                #  AWS region
+    region         = "eu-west-2"                     #  AWS region
     #profile        = "bedrockuser1"
     #dynamodb_table = "terraform-locks"               # DynamoDB table for state locking
     #encrypt        = true

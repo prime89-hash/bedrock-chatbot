@@ -98,12 +98,25 @@ resource "aws_alb_listener" "alb_listener_https" {
       user_pool_arn       = aws_cognito_user_pool.bedrock_user_pool.arn
       user_pool_client_id = aws_cognito_user_pool_client.bedrock_client.id
       user_pool_domain    = aws_cognito_user_pool_domain.bedrock_domain.domain
+      on_unauthenticated_request = "authenticate"
     }
   }
+}
 
-  default_action {
+# Listener rule to forward after authentication
+resource "aws_alb_listener_rule" "forward_after_auth" {
+  listener_arn = aws_alb_listener.alb_listener_https.arn
+  priority     = 100
+
+  action {
     type             = "forward"
     target_group_arn = aws_alb_target_group.bedrock_chatbot_tg.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["*"]
+    }
   }
 }
 

@@ -1,5 +1,4 @@
 import boto3
-import json
 import streamlit as st
 
 
@@ -10,32 +9,30 @@ bedrock_client = boto3.client(
     region_name="us-west-2"
 )
 
-# Model ID (Amazon Titan)
-model_id = "amazon.titan-text-express-v1"
+# Model ID (Claude 3.5 Sonnet)
+model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 
 # Function to generate response from Bedrock
 def query_bedrock(language, freeform_text):
-    prompt = f"You are a chatbot. You are in {language}.\n\n{freeform_text}"
-
-    body = {
-        "inputText": prompt,
-        "textGenerationConfig": {
-            "temperature": 0.9,
-            "maxTokenCount": 2000,
-            "topP": 1,
-            "stopSequences": []
-        }
-    }
-
-    response = bedrock_client.invoke_model(
-        body=json.dumps(body),
+    system_message = f"You are a chatbot. You are in {language}."
+    
+    response = bedrock_client.converse(
         modelId=model_id,
-        accept="application/json",
-        contentType="application/json"
+        messages=[
+            {
+                "role": "user",
+                "content": [{"text": freeform_text}]
+            }
+        ],
+        system=[{"text": system_message}],
+        inferenceConfig={
+            "temperature": 0.9,
+            "maxTokens": 2000,
+            "topP": 1
+        }
     )
-
-    result = json.loads(response['body'].read())
-    return result['results'][0]['outputText']
+    
+    return response['output']['message']['content'][0]['text']
 
 # Streamlit UI
 st.title("Bedrock Chatbot ASK ME")

@@ -52,6 +52,7 @@ resource "aws_iam_policy" "bedrock_access_policy" {
       {
         Action = [
           "bedrock:InvokeModel",
+          "bedrock:Converse",
           "bedrock:ListModels",
           "bedrock:GetModel",
           "bedrock:DescribeModel",

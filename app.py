@@ -1,10 +1,18 @@
-import os
+# Import necessary libraries
 import boto3
 import json
 import streamlit as st
+from botocore.config import Config
 
-# Set AWS profile
-#os.environ["AWS_PROFILE"] = "bedrockuser"
+# Configure boto3 to use a specific retry strategy
+boto_config = Config(
+    retries={
+        'max_attempts': 10,
+        'mode': 'standard'
+    },
+    connect_timeout=10,
+    read_timeout=60
+)
 
 # Create Bedrock client
 bedrock_client = boto3.client(

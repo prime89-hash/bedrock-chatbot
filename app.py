@@ -4,7 +4,7 @@ import json
 import streamlit as st
 
 # Set AWS profile
-os.environ["AWS_PROFILE"] = "bedrockuser"
+#os.environ["AWS_PROFILE"] = "bedrockuser"
 
 # Create Bedrock client
 bedrock_client = boto3.client(

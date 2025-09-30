@@ -40,9 +40,11 @@ resource "aws_iam_role" "ecs_bedrock_task_role" {
   })
 }
 
+
+
 resource "aws_iam_policy" "bedrock_access_policy" {
-  name        = "ClaudeSonnet4AccessPolicy"
-  description = "Policy to allow ECS task to invoke Claude Sonnet 4"
+  name        = "BedrockAccessPolicy"
+  description = "Policy to allow access to Amazon Bedrock"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -63,10 +65,9 @@ resource "aws_iam_policy" "bedrock_access_policy" {
 
 }
 
+
+
 resource "aws_iam_role_policy_attachment" "bedrock_attachment" {
   role       = aws_iam_role.ecs_bedrock_task_role.name
   policy_arn = aws_iam_policy.bedrock_access_policy.arn
 }
-
-
-

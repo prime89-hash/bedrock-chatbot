@@ -42,26 +42,33 @@ resource "aws_iam_role" "ecs_bedrock_task_role" {
 
 resource "aws_iam_policy" "bedrock_access_policy" {
   name        = "BedrockAccessPolicy"
-  description = "Policy to allow access to Amazon Bedrock"
+  description = "Policy to allow ECS task to access Titan model"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
+        Effect = "Allow"
         Action = [
           "bedrock:InvokeModel",
-          "bedrock:ListModels",
+          "bedrock:InvokeModelWithResponseStream",
           "bedrock:GetModel",
-          "bedrock:DescribeModel",
-          "bedrock:ListFoundationModels",
-          "bedrock:InvokeModelWithResponseStream"
+          "bedrock:DescribeModel"
         ]
-        Effect   = "Allow"
+        Resource = "arn:aws:bedrock:${var.aws_region}::model/amazon.titan-text-express-v1"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "bedrock:ListModels",
+          "bedrock:ListFoundationModels"
+        ]
         Resource = "*"
       }
     ]
   })
 }
+
 
 resource "aws_iam_role_policy_attachment" "bedrock_attachment" {
   role       = aws_iam_role.ecs_bedrock_task_role.name

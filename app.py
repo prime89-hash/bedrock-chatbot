@@ -17,12 +17,12 @@ boto_config = Config(
 # Create Bedrock client
 bedrock_client = boto3.client(
     service_name="bedrock-runtime",
-    region_name="us-west-2",
+    region_name="us-west-2",  # Change if your model is in another region
     config=boto_config
 )
 
-# Model ID (Amazon Titan)
-model_id = "amazon.titan-text-express-v1"
+# Model ID (Claude Sonnet 4)
+model_id = "anthropic.claude-sonnet-4-20250514-v1:0"
 
 # Function to generate response from Bedrock
 def query_bedrock(language, freeform_text):
@@ -39,10 +39,10 @@ def query_bedrock(language, freeform_text):
     }
 
     response = bedrock_client.invoke_model(
-        body=json.dumps(body),
         modelId=model_id,
-        accept="application/json",
-        contentType="application/json"
+        body=json.dumps(body),
+        contentType="application/json",
+        accept="application/json"
     )
 
     result = json.loads(response['body'].read())
@@ -54,14 +54,12 @@ st.title("Bedrock Chatbot ASK ME")
 language = st.sidebar.selectbox("Language", ["english", "spanish"])
 freeform_text = st.sidebar.text_area("What is your question?", max_chars=200)
 
-#Submit Button
-
+# Submit Button
 if st.sidebar.button("Submit"):
-    if freeform_text.strip()!="":
-        with st.spinner("thinking..."):
+    if freeform_text.strip() != "":
+        with st.spinner("Thinking..."):
             output = query_bedrock(language, freeform_text)
         st.success("Done!")
         st.write(output)
     else:
         st.error("Please enter a question.")
-

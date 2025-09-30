@@ -34,12 +34,13 @@ resource "aws_subnet" "private_subnet" {
 }
 
 resource "aws_eip" "nat_eip" {
-  count  = length(aws_subnet.public_subnet)
-  domain = "vpc"
+  count = length(aws_subnet.public_subnet)
 
   tags = {
     Name = "bedrock-nat-eip-${count.index + 1}"
   }
+
+  depends_on = [aws_internet_gateway.igw]
 }
 
 resource "aws_nat_gateway" "bedrock_nat" {

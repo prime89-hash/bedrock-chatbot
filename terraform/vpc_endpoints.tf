@@ -1,4 +1,5 @@
 # VPC Endpoints for secure AWS service communication
+# Temporarily disabled for troubleshooting
 
 # Security group for VPC endpoints
 resource "aws_security_group" "vpc_endpoint_sg" {
@@ -7,10 +8,10 @@ resource "aws_security_group" "vpc_endpoint_sg" {
   vpc_id      = aws_vpc.bedrock_main.id
 
   ingress {
-    from_port       = 443
-    to_port         = 443
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ecs_sg.id]
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
   }
 
   egress {
@@ -25,70 +26,73 @@ resource "aws_security_group" "vpc_endpoint_sg" {
   }
 }
 
-# Bedrock Runtime VPC Endpoint
-resource "aws_vpc_endpoint" "bedrock_runtime" {
-  vpc_id              = aws_vpc.bedrock_main.id
-  service_name        = "com.amazonaws.${var.aws_region}.bedrock-runtime"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private_subnet[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoint_sg.id]
-  private_dns_enabled = true
+# Temporarily comment out VPC endpoints to test connectivity
+# Uncomment after confirming basic functionality works
 
-  tags = {
-    Name = "bedrock-runtime-endpoint"
-  }
-}
+# # Bedrock Runtime VPC Endpoint
+# resource "aws_vpc_endpoint" "bedrock_runtime" {
+#   vpc_id              = aws_vpc.bedrock_main.id
+#   service_name        = "com.amazonaws.${var.aws_region}.bedrock-runtime"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = aws_subnet.private_subnet[*].id
+#   security_group_ids  = [aws_security_group.vpc_endpoint_sg.id]
+#   private_dns_enabled = true
 
-# ECR API VPC Endpoint
-resource "aws_vpc_endpoint" "ecr_api" {
-  vpc_id              = aws_vpc.bedrock_main.id
-  service_name        = "com.amazonaws.${var.aws_region}.ecr.api"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private_subnet[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoint_sg.id]
-  private_dns_enabled = true
+#   tags = {
+#     Name = "bedrock-runtime-endpoint"
+#   }
+# }
 
-  tags = {
-    Name = "ecr-api-endpoint"
-  }
-}
+# # ECR API VPC Endpoint
+# resource "aws_vpc_endpoint" "ecr_api" {
+#   vpc_id              = aws_vpc.bedrock_main.id
+#   service_name        = "com.amazonaws.${var.aws_region}.ecr.api"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = aws_subnet.private_subnet[*].id
+#   security_group_ids  = [aws_security_group.vpc_endpoint_sg.id]
+#   private_dns_enabled = true
 
-# ECR Docker VPC Endpoint
-resource "aws_vpc_endpoint" "ecr_dkr" {
-  vpc_id              = aws_vpc.bedrock_main.id
-  service_name        = "com.amazonaws.${var.aws_region}.ecr.dkr"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private_subnet[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoint_sg.id]
-  private_dns_enabled = true
+#   tags = {
+#     Name = "ecr-api-endpoint"
+#   }
+# }
 
-  tags = {
-    Name = "ecr-dkr-endpoint"
-  }
-}
+# # ECR Docker VPC Endpoint
+# resource "aws_vpc_endpoint" "ecr_dkr" {
+#   vpc_id              = aws_vpc.bedrock_main.id
+#   service_name        = "com.amazonaws.${var.aws_region}.ecr.dkr"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = aws_subnet.private_subnet[*].id
+#   security_group_ids  = [aws_security_group.vpc_endpoint_sg.id]
+#   private_dns_enabled = true
 
-# CloudWatch Logs VPC Endpoint
-resource "aws_vpc_endpoint" "logs" {
-  vpc_id              = aws_vpc.bedrock_main.id
-  service_name        = "com.amazonaws.${var.aws_region}.logs"
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private_subnet[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoint_sg.id]
-  private_dns_enabled = true
+#   tags = {
+#     Name = "ecr-dkr-endpoint"
+#   }
+# }
 
-  tags = {
-    Name = "logs-endpoint"
-  }
-}
+# # CloudWatch Logs VPC Endpoint
+# resource "aws_vpc_endpoint" "logs" {
+#   vpc_id              = aws_vpc.bedrock_main.id
+#   service_name        = "com.amazonaws.${var.aws_region}.logs"
+#   vpc_endpoint_type   = "Interface"
+#   subnet_ids          = aws_subnet.private_subnet[*].id
+#   security_group_ids  = [aws_security_group.vpc_endpoint_sg.id]
+#   private_dns_enabled = true
 
-# S3 Gateway VPC Endpoint (for ECR layers)
-resource "aws_vpc_endpoint" "s3" {
-  vpc_id            = aws_vpc.bedrock_main.id
-  service_name      = "com.amazonaws.${var.aws_region}.s3"
-  vpc_endpoint_type = "Gateway"
-  route_table_ids   = aws_route_table.private_rt[*].id
+#   tags = {
+#     Name = "logs-endpoint"
+#   }
+# }
 
-  tags = {
-    Name = "s3-gateway-endpoint"
-  }
-}
+# # S3 Gateway VPC Endpoint (for ECR layers)
+# resource "aws_vpc_endpoint" "s3" {
+#   vpc_id            = aws_vpc.bedrock_main.id
+#   service_name      = "com.amazonaws.${var.aws_region}.s3"
+#   vpc_endpoint_type = "Gateway"
+#   route_table_ids   = aws_route_table.private_rt[*].id
+
+#   tags = {
+#     Name = "s3-gateway-endpoint"
+#   }
+# }

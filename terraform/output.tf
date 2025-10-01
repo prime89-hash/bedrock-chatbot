@@ -31,24 +31,12 @@ output "ecs_cluster_name" {
   value = aws_ecs_cluster.bedrock_ecs_main.name
 }
 
-output "vpc_endpoints" {
-  description = "VPC Endpoints for secure communication"
+output "troubleshooting_info" {
+  description = "Troubleshooting information"
   value = {
-    bedrock_runtime = aws_vpc_endpoint.bedrock_runtime.id
-    ecr_api        = aws_vpc_endpoint.ecr_api.id
-    ecr_dkr        = aws_vpc_endpoint.ecr_dkr.id
-    logs           = aws_vpc_endpoint.logs.id
-    s3             = aws_vpc_endpoint.s3.id
-  }
-}
-
-output "security_improvements" {
-  description = "Security enhancements implemented"
-  value = {
-    vpc_endpoints_enabled = "✅ Private AWS service communication"
-    restricted_iam_policy = "✅ Limited Bedrock model access"
-    strong_password_policy = "✅ 12+ chars with symbols required"
-    input_validation = "✅ XSS and injection protection"
-    secure_credentials = "✅ GitHub Secrets integration"
+    vpc_endpoints_status = "⚠️ Temporarily disabled for troubleshooting"
+    authentication_check = "Verify ALB listener has Cognito authentication enabled"
+    bedrock_connectivity = "ECS tasks use NAT gateway for Bedrock access"
+    login_credentials = "Username: admin, Password: SecureAdmin2025!@# (or from GitHub Secrets)"
   }
 }

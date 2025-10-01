@@ -2,401 +2,439 @@
 
 ## 📋 Overview
 
-This guide provides step-by-step instructions to deploy a secure chatbot powered by Claude Sonnet 4 with enterprise-grade security features including ALB-level Cognito authentication, private networking, and VPC endpoints.
+This guide provides step-by-step instructions to deploy a secure chatbot powered by Claude Sonnet 4 with enterprise-grade security features including ALB-level Cognito authentication, private networking, and secure AWS service communication.
 
-## 🏗️ Architecture
+## 🏗️ Current Architecture
 
 ```
-Internet → ALB (HTTPS) → Cognito Auth → ECS (Private) → VPC Endpoint → Bedrock
+Internet → ALB (HTTPS + Cognito Auth) → ECS Fargate (Private) → NAT Gateway → Bedrock API
+                ↓
+        Cognito User Pool
+        (MFA Support)
 ```
 
 ### Security Features
-- ✅ ALB-level Cognito authentication with MFA support
-- ✅ HTTPS encryption (self-signed certificate)
-- ✅ Private subnets for compute resources
-- ✅ VPC endpoints for AWS service communication
-- ✅ IAM roles with least privilege access
+- ✅ ALB-level Cognito authentication with strong password policy
+- ✅ HTTPS encryption (self-signed certificate for development)
+- ✅ Private subnets for all compute resources
+- ✅ NAT Gateway for secure outbound internet access
+- ✅ IAM roles with Bedrock-specific permissions
+- ✅ Input validation and XSS protection
 - ✅ Automated user creation via GitHub Actions
+- ✅ VPC endpoints ready (currently disabled for troubleshooting)
 
-## 🛠️ Prerequisites
+## 🔐 AWS Account Requirements
 
-### Required Tools
-- AWS CLI configured with appropriate permissions
-- Terraform >= 1.5.0
-- Docker
-- Git
-- GitHub account
+### Required AWS Services Access
 
-### AWS Permissions Required
-- EC2, ECS, ALB, VPC management
-- Cognito User Pool management
-- ECR repository access
-- Bedrock model access
-- IAM role creation
-- ACM certificate management
+#### **Core Compute & Networking**
+- **Amazon VPC**: Create VPCs, subnets, route tables, internet gateways
+- **Amazon ECS**: Create clusters, services, task definitions
+- **AWS Fargate**: Launch containerized applications
+- **Elastic Load Balancing (ALB)**: Create and configure application load balancers
+- **Amazon ECR**: Create repositories, push/pull container images
 
-## 📁 Project Structure
+#### **AI & Machine Learning**
+- **Amazon Bedrock**: 
+  - Access to Claude Sonnet 4 model (`us.anthropic.claude-sonnet-4-20250514-v1:0`)
+  - InvokeModel and Converse API permissions
+  - Model access must be granted in Bedrock console
 
+#### **Security & Authentication**
+- **Amazon Cognito**: Create user pools, clients, domains
+- **AWS Certificate Manager (ACM)**: Create and manage SSL certificates
+- **AWS IAM**: Create roles, policies, and service-linked roles
+
+#### **Monitoring & Logging**
+- **Amazon CloudWatch**: Create log groups, view logs and metrics
+- **AWS CloudTrail**: Optional for audit logging
+
+#### **Optional (for enhanced security)**
+- **VPC Endpoints**: Interface and Gateway endpoints for private AWS service access
+- **AWS WAF**: Web application firewall protection
+- **Amazon GuardDuty**: Threat detection service
+
+### Required IAM Permissions
+
+#### **For Deployment User/Role**
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:*",
+        "ecs:*",
+        "ecr:*",
+        "elasticloadbalancing:*",
+        "cognito-idp:*",
+        "acm:*",
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:CreatePolicy",
+        "iam:DeletePolicy",
+        "iam:GetRole",
+        "iam:GetPolicy",
+        "iam:ListRolePolicies",
+        "iam:ListAttachedRolePolicies",
+        "iam:PassRole",
+        "logs:*",
+        "bedrock:*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
 ```
-bedrock-chatbot/
-├── .github/workflows/
-│   └── deploy.yml              # CI/CD pipeline
-├── terraform/
-│   ├── alb.tf                  # Load balancer + Cognito auth
-│   ├── cloudwatch.tf           # Logging configuration
-│   ├── cognito.tf              # User pool and client
-│   ├── ecr.tf                  # Container registry
-│   ├── ecs.tf                  # Container orchestration
-│   ├── iam.tf                  # Permissions and roles
-│   ├── output.tf               # Terraform outputs
-│   ├── provider.tf             # AWS provider config
-│   ├── ssl.tf                  # Self-signed certificate
-│   ├── terraform.tfvars        # Configuration variables
-│   ├── variable.tf             # Variable definitions
-│   └── vpc.tf                  # Network infrastructure
-├── app.py                      # Streamlit chatbot application
-├── Dockerfile                  # Container configuration
-├── requirements.txt            # Python dependencies
-└── README.md                   # Basic documentation
+
+#### **For GitHub Actions OIDC Role**
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::ACCOUNT-ID:oidc-provider/token.actions.githubusercontent.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+        },
+        "StringLike": {
+          "token.actions.githubusercontent.com:sub": "repo:YOUR-USERNAME/bedrock-chatbot:*"
+        }
+      }
+    }
+  ]
+}
 ```
 
-## 🚀 Step-by-Step Implementation
+## 🚀 Step-by-Step Setup for New AWS Account
 
-### Step 1: Repository Setup
+### Step 1: AWS Account Preparation
 
-1. **Clone or Fork Repository**
-   ```bash
-   git clone https://github.com/your-username/bedrock-chatbot.git
-   cd bedrock-chatbot
-   ```
-
-2. **Configure GitHub Secrets**
-   - Go to GitHub repository → Settings → Secrets and variables → Actions
-   - Add required secrets:
-     ```
-     AWS_ROLE_ARN: arn:aws:iam::ACCOUNT-ID:role/GitHubActionsRole
-     ```
-
-3. **Setup AWS OIDC Role** (if not exists)
-   ```bash
-   # Create OIDC identity provider and role for GitHub Actions
-   # This allows GitHub to assume AWS roles without storing credentials
-   ```
-
-### Step 2: Infrastructure Configuration
-
-1. **Review Terraform Variables**
-   ```bash
-   cd terraform
-   cat terraform.tfvars
-   ```
-   
-   Default configuration:
-   ```hcl
-   aws_region = "us-west-2"
-   image_tag = "latest"
-   container_port = 8501
-   ```
-
-2. **Customize Configuration** (optional)
-   - Modify `terraform.tfvars` for different regions or settings
-   - Update `variable.tf` for additional customization
-
-### Step 3: Deploy Infrastructure
-
-#### Option A: Automated Deployment (Recommended)
-
-1. **Push to Main Branch**
-   ```bash
-   git add .
-   git commit -m "Initial deployment"
-   git push origin main
-   ```
-
-2. **Monitor GitHub Actions**
-   - Go to GitHub repository → Actions tab
-   - Watch the deployment progress
-   - Deployment includes:
-     - Infrastructure creation
-     - Docker image build and push
-     - ECS service deployment
-     - Automatic user creation
-
-#### Option B: Manual Deployment
-
-1. **Initialize Terraform**
-   ```bash
-   cd terraform
-   terraform init
-   ```
-
-2. **Deploy Infrastructure**
-   ```bash
-   terraform apply -auto-approve
-   ```
-
-3. **Build and Push Docker Image**
-   ```bash
-   cd ..
-   
-   # Get ECR repository URL
-   ECR_URI=$(terraform -chdir=terraform output -raw ecs_repository_url)
-   
-   # Login to ECR
-   aws ecr get-login-password --region us-west-2 | \
-     docker login --username AWS --password-stdin $ECR_URI
-   
-   # Build and push image
-   docker build -t bedrock-chatbot .
-   docker tag bedrock-chatbot:latest $ECR_URI:latest
-   docker push $ECR_URI:latest
-   ```
-
-4. **Update ECS Service**
-   ```bash
-   aws ecs update-service \
-     --cluster bedrock-ecs-cluster \
-     --service bedrock-chatbot-service \
-     --force-new-deployment \
-     --region us-west-2
-   ```
-
-### Step 4: Access Application
-
-1. **Get Application URL**
-   ```bash
-   cd terraform
-   terraform output application_url
-   ```
-   
-   Example output: `https://bedrock-alb-xxxxxxxxx.us-west-2.elb.amazonaws.com`
-
-2. **Get Login Credentials**
-   - **Username**: `admin`
-   - **Password**: `Admin123!`
-   
-   (Automatically created by GitHub Actions deployment)
-
-3. **Access the Application**
-   - Open the HTTPS URL in your browser
-   - Accept the security warning (self-signed certificate)
-   - Login with the credentials above
-   - Start chatting with Claude Sonnet 4!
-
-### Step 5: User Management
-
-#### Create Additional Users
-
+#### **1.1 Enable Required Services**
 ```bash
-# Get User Pool ID
-USER_POOL_ID=$(terraform -chdir=terraform output -raw cognito_user_pool_id)
+# Check if Bedrock is available in your region
+aws bedrock list-foundation-models --region us-west-2
 
-# Create new user
+# Enable Bedrock model access (must be done in console)
+# Go to AWS Bedrock Console → Model Access → Request Access for Claude models
+```
+
+#### **1.2 Create OIDC Identity Provider**
+```bash
+# Create OIDC provider for GitHub Actions
+aws iam create-open-id-connect-provider \
+  --url https://token.actions.githubusercontent.com \
+  --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1 \
+  --client-id-list sts.amazonaws.com
+```
+
+#### **1.3 Create GitHub Actions Role**
+```bash
+# Create role for GitHub Actions
+aws iam create-role \
+  --role-name GitHubActionsRole \
+  --assume-role-policy-document file://github-trust-policy.json
+
+# Attach necessary policies
+aws iam attach-role-policy \
+  --role-name GitHubActionsRole \
+  --policy-arn arn:aws:iam::aws:policy/PowerUserAccess
+```
+
+### Step 2: Repository Configuration
+
+#### **2.1 Fork/Clone Repository**
+```bash
+git clone https://github.com/your-username/bedrock-chatbot.git
+cd bedrock-chatbot
+```
+
+#### **2.2 Configure GitHub Secrets**
+Go to GitHub repository → Settings → Secrets and variables → Actions
+
+**Required Secrets:**
+- `AWS_ROLE_ARN`: `arn:aws:iam::YOUR-ACCOUNT-ID:role/GitHubActionsRole`
+
+**Optional Secrets:**
+- `ADMIN_PASSWORD`: Custom admin password (default: `SecureAdmin2025!@#`)
+
+#### **2.3 Update Configuration**
+Edit `terraform/terraform.tfvars`:
+```hcl
+aws_region = "us-west-2"  # Change if needed
+image_tag = "latest"
+container_port = 8501
+vpc_cidr = "10.0.0.0/16"
+public_subnet_cidr = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidr = ["10.0.3.0/24", "10.0.4.0/24"]
+```
+
+### Step 3: Bedrock Model Access
+
+#### **3.1 Request Model Access (Critical)**
+1. Go to AWS Bedrock Console
+2. Navigate to "Model Access" in left sidebar
+3. Click "Request model access"
+4. Select "Anthropic Claude Sonnet 4"
+5. Submit request (may take a few minutes to approve)
+
+#### **3.2 Verify Model Access**
+```bash
+aws bedrock list-foundation-models \
+  --by-provider anthropic \
+  --region us-west-2 \
+  --query 'modelSummaries[?contains(modelId, `claude-sonnet-4`)]'
+```
+
+### Step 4: Deploy Infrastructure
+
+#### **4.1 Automated Deployment**
+```bash
+# Push to trigger deployment
+git add .
+git commit -m "Initial deployment for new AWS account"
+git push origin main
+```
+
+#### **4.2 Monitor Deployment**
+- Go to GitHub Actions tab
+- Watch deployment progress
+- Check for any permission errors
+
+#### **4.3 Manual Deployment (Alternative)**
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply -auto-approve
+```
+
+### Step 5: Post-Deployment Configuration
+
+#### **5.1 Get Application URL**
+```bash
+cd terraform
+terraform output application_url
+```
+
+#### **5.2 Create Admin User (if not auto-created)**
+```bash
+USER_POOL_ID=$(terraform output -raw cognito_user_pool_id)
+
 aws cognito-idp admin-create-user \
   --user-pool-id $USER_POOL_ID \
-  --username newuser \
-  --user-attributes Name=email,Value=newuser@example.com Name=email_verified,Value=true \
+  --username admin \
+  --user-attributes Name=email,Value=admin@example.com Name=email_verified,Value=true \
   --message-action SUPPRESS \
   --region us-west-2
 
-# Set permanent password
 aws cognito-idp admin-set-user-password \
   --user-pool-id $USER_POOL_ID \
-  --username newuser \
-  --password NewUser123! \
+  --username admin \
+  --password "SecureAdmin2025!@#" \
   --permanent \
   --region us-west-2
 
-# Confirm user
 aws cognito-idp admin-confirm-sign-up \
   --user-pool-id $USER_POOL_ID \
-  --username newuser \
-  --region us-west-2
-```
-
-#### List Existing Users
-
-```bash
-aws cognito-idp list-users \
-  --user-pool-id $USER_POOL_ID \
-  --region us-west-2
-```
-
-#### Delete User
-
-```bash
-aws cognito-idp admin-delete-user \
-  --user-pool-id $USER_POOL_ID \
-  --username username \
+  --username admin \
   --region us-west-2
 ```
 
 ## 🔧 Configuration Details
 
-### Cognito Authentication
+### Current Network Architecture
 
-- **User Pool**: Manages user accounts and authentication
-- **MFA Support**: Can be enabled in Cognito console
-- **Password Policy**: 8+ characters, mixed case, numbers
-- **OAuth Flows**: Authorization code grant for ALB integration
+- **VPC**: 10.0.0.0/16 (isolated network)
+- **Public Subnets**: 10.0.1.0/24, 10.0.2.0/24 (ALB only)
+- **Private Subnets**: 10.0.3.0/24, 10.0.4.0/24 (ECS tasks)
+- **NAT Gateways**: 2 (one per AZ for high availability)
+- **Internet Gateway**: Public subnet internet access
 
-### Network Security
+### Security Configuration
 
-- **VPC**: Isolated network (10.0.0.0/16)
-- **Public Subnets**: ALB only (10.0.1.0/24, 10.0.2.0/24)
-- **Private Subnets**: ECS tasks (10.0.3.0/24, 10.0.4.0/24)
-- **NAT Gateways**: Outbound internet access for private subnets
-- **Security Groups**: Restrictive ingress/egress rules
+#### **Cognito User Pool Settings**
+- **Password Policy**: 12+ characters, mixed case, numbers, symbols required
+- **MFA**: Available (can be enabled per user)
+- **Admin Creation**: Only admins can create users
+- **Token Validity**: 1 hour access tokens, 7 days refresh tokens
+
+#### **IAM Roles**
+- **ECS Execution Role**: Pull images from ECR, write logs
+- **ECS Task Role**: Access Bedrock APIs only
+- **Least Privilege**: Minimal permissions for each service
+
+#### **Network Security**
+- **Security Groups**: Restrictive rules (ALB → ECS → NAT → Internet)
+- **Private Subnets**: No direct internet access
+- **HTTPS Only**: HTTP redirects to HTTPS
 
 ### Container Configuration
 
 - **Base Image**: python:3.11-slim
-- **Application**: Streamlit chatbot
-- **Health Checks**: Custom endpoint for ALB monitoring
-- **Resources**: 0.5 vCPU, 1GB RAM (configurable)
+- **Resources**: 0.5 vCPU, 1GB RAM
+- **Health Checks**: Custom endpoint for monitoring
+- **Auto Scaling**: Can be configured based on CPU/memory
 
-### AI Model Configuration
+## 💰 Cost Analysis for New Account
 
-- **Model**: Claude Sonnet 4 (us.anthropic.claude-sonnet-4-20250514-v1:0)
-- **API**: Bedrock Converse API
-- **Parameters**: Temperature 0.9, Max tokens 2000
-- **Languages**: English, Spanish, French support
-
-## 📊 Monitoring and Troubleshooting
-
-### Check Deployment Status
-
-```bash
-# ECS Service Status
-aws ecs describe-services \
-  --cluster bedrock-ecs-cluster \
-  --services bedrock-chatbot-service \
-  --region us-west-2
-
-# ALB Target Health
-aws elbv2 describe-target-health \
-  --target-group-arn $(terraform output -raw target_group_arn) \
-  --region us-west-2
-
-# View Application Logs
-aws logs tail /aws/ecs/bedrock-chatbot --follow --region us-west-2
-```
-
-### Common Issues and Solutions
-
-#### 1. "Not Secure" Browser Warning
-- **Cause**: Self-signed SSL certificate
-- **Solution**: Click "Advanced" → "Proceed to site"
-- **Production Fix**: Use real domain with validated ACM certificate
-
-#### 2. User Login Issues
-- **Check**: User exists and is confirmed
-- **Fix**: Run user creation commands from Step 5
-- **Verify**: User status in Cognito console
-
-#### 3. ECS Tasks Not Starting
-- **Check**: CloudWatch logs for error messages
-- **Common Causes**: IAM permissions, VPC configuration, image issues
-- **Fix**: Review logs and adjust configuration
-
-#### 4. Bedrock Access Denied
-- **Check**: IAM role has Bedrock permissions
-- **Verify**: Model access is granted in Bedrock console
-- **Region**: Ensure using supported region (us-west-2)
-
-## 💰 Cost Estimation
-
-### Monthly Costs (Approximate)
+### Monthly Costs (US-West-2)
 
 | Service | Configuration | Monthly Cost |
 |---------|---------------|--------------|
-| ECS Fargate | 0.5 vCPU, 1GB RAM | ~$15 |
+| ECS Fargate | 0.5 vCPU, 1GB, 24/7 | ~$15 |
 | NAT Gateway | 2 instances | ~$90 |
 | Application Load Balancer | Standard ALB | ~$20 |
-| VPC Endpoints | Interface endpoints | ~$22 |
 | ECR Storage | 1GB | ~$0.10 |
-| CloudWatch Logs | 10GB | ~$5 |
-| **Total (excluding Bedrock)** | | **~$150-200** |
+| CloudWatch Logs | 10GB retention | ~$5 |
+| Cognito User Pool | <50K MAU | Free |
+| **Infrastructure Total** | | **~$130** |
 
 ### Bedrock Costs (Pay-per-use)
-- **Input tokens**: $0.003 per 1K tokens
-- **Output tokens**: $0.015 per 1K tokens
+- **Claude Sonnet 4**: 
+  - Input: $0.003 per 1K tokens
+  - Output: $0.015 per 1K tokens
 - **Typical conversation**: $0.01-0.05 per exchange
+- **Monthly estimate**: $10-50 (depends on usage)
 
-## 🔄 CI/CD Pipeline
+### **Total Monthly Cost**: ~$140-180
 
-### Automated Deployment
-- **Trigger**: Push to main branch
-- **Steps**: Infrastructure → Build → Deploy → User Creation
-- **Duration**: ~10-15 minutes
+## 🔍 Troubleshooting Common Issues
 
-### Manual Operations
-- **Destroy**: GitHub Actions → Run workflow → Set destroy=true
-- **Redeploy**: Push changes or manual trigger
+### Authentication Issues
+
+#### **Problem**: No login page appears
+**Solutions**:
+1. Check ALB listener configuration
+2. Verify Cognito domain is accessible
+3. Accept self-signed certificate warning
+
+#### **Problem**: User login fails
+**Solutions**:
+1. Verify user exists and is confirmed
+2. Check password meets policy requirements
+3. Ensure user pool client configuration is correct
+
+### Bedrock Connectivity Issues
+
+#### **Problem**: "Technical difficulties" error
+**Solutions**:
+1. Verify Bedrock model access is granted
+2. Check IAM permissions for ECS task role
+3. Ensure region supports Claude Sonnet 4
+4. Check CloudWatch logs for specific errors
+
+#### **Problem**: Model access denied
+**Solutions**:
+```bash
+# Check model access status
+aws bedrock get-model-invocation-logging-configuration --region us-west-2
+
+# List available models
+aws bedrock list-foundation-models --region us-west-2
+```
+
+### Network Issues
+
+#### **Problem**: ECS tasks not starting
+**Solutions**:
+1. Check security group rules
+2. Verify NAT gateway configuration
+3. Ensure private subnets have route to NAT
+4. Check ECR permissions
+
+#### **Problem**: Health check failures
+**Solutions**:
+1. Verify container port configuration
+2. Check application startup logs
+3. Ensure health check endpoint responds
 
 ## 🔒 Security Best Practices
 
-### Implemented
-- ✅ Private subnets for compute
-- ✅ VPC endpoints for AWS services
-- ✅ IAM roles with minimal permissions
-- ✅ Cognito authentication
-- ✅ HTTPS encryption
-- ✅ Security groups with restrictive rules
+### Implemented Security Controls
 
-### Additional Recommendations
-- 🔄 Enable MFA in Cognito
-- 🔄 Use AWS WAF for additional protection
-- 🔄 Enable GuardDuty for threat detection
-- 🔄 Implement backup strategies
-- 🔄 Use real domain with validated SSL
+1. **Network Isolation**: Private subnets, security groups
+2. **Authentication**: Cognito with strong password policy
+3. **Encryption**: HTTPS for all traffic
+4. **Access Control**: IAM roles with minimal permissions
+5. **Input Validation**: XSS and injection protection
+6. **Logging**: CloudWatch logs for monitoring
+
+### Additional Security Recommendations
+
+1. **Enable MFA**: For all Cognito users
+2. **Use Real SSL**: Custom domain with validated certificate
+3. **Add WAF**: Web application firewall protection
+4. **Enable GuardDuty**: Threat detection
+5. **VPC Endpoints**: Private AWS service communication (when stable)
+6. **Backup Strategy**: Regular configuration backups
 
 ## 🚀 Production Considerations
 
-### Scalability
-- **Auto Scaling**: Configure ECS service auto-scaling
-- **Load Balancing**: ALB handles multiple ECS tasks
-- **Database**: Add RDS for conversation history
-- **Caching**: Implement ElastiCache for performance
+### Scalability Enhancements
+
+1. **Auto Scaling**: Configure ECS service auto-scaling
+2. **Multi-Region**: Deploy in multiple AWS regions
+3. **Database**: Add RDS for conversation history
+4. **Caching**: Implement ElastiCache for performance
 
 ### High Availability
-- **Multi-AZ**: Already implemented (2 AZs)
-- **Health Checks**: ALB monitors application health
-- **Failover**: ECS automatically replaces failed tasks
 
-### Security Enhancements
-- **Real SSL**: Use validated ACM certificate with custom domain
-- **WAF**: Add Web Application Firewall
-- **Secrets**: Use AWS Secrets Manager for sensitive data
-- **Compliance**: Implement logging and audit trails
+1. **Multi-AZ**: Already implemented (2 availability zones)
+2. **Health Monitoring**: ALB health checks with automatic failover
+3. **Backup**: Automated snapshots and configuration backups
 
-## 📞 Support and Maintenance
+### Compliance & Governance
 
-### Regular Tasks
-- **Monitor**: CloudWatch metrics and logs
-- **Update**: Container images and dependencies
-- **Backup**: Export Cognito user data
-- **Scale**: Adjust ECS task count based on usage
+1. **CloudTrail**: Enable for audit logging
+2. **Config**: Monitor configuration compliance
+3. **Secrets Manager**: Store sensitive configuration
+4. **Tagging**: Implement consistent resource tagging
 
-### Troubleshooting Resources
-- **CloudWatch Logs**: Application and infrastructure logs
-- **AWS Console**: Service status and configuration
-- **GitHub Actions**: Deployment history and logs
-- **Terraform State**: Infrastructure state management
+## 📞 Support & Maintenance
+
+### Regular Maintenance Tasks
+
+1. **Monitor**: CloudWatch metrics and alarms
+2. **Update**: Container images and dependencies
+3. **Backup**: Export Cognito user data
+4. **Scale**: Adjust resources based on usage patterns
+
+### Monitoring Setup
+
+```bash
+# View application logs
+aws logs tail /aws/ecs/bedrock-chatbot --follow --region us-west-2
+
+# Check ECS service health
+aws ecs describe-services --cluster bedrock-ecs-cluster --services bedrock-chatbot-service --region us-west-2
+
+# Monitor ALB metrics
+aws cloudwatch get-metric-statistics --namespace AWS/ApplicationELB --metric-name RequestCount --dimensions Name=LoadBalancer,Value=app/bedrock-alb/xxx --start-time 2025-01-01T00:00:00Z --end-time 2025-01-01T01:00:00Z --period 300 --statistics Sum --region us-west-2
+```
 
 ## 🎉 Conclusion
 
-You now have a fully functional, secure chatbot with:
-- **Enterprise Authentication**: Cognito with MFA support
-- **Private Networking**: Isolated compute environment
-- **AI Integration**: Claude Sonnet 4 via Bedrock
-- **Automated Deployment**: GitHub Actions CI/CD
-- **Production Ready**: Scalable and maintainable architecture
+This implementation provides a production-ready, secure chatbot solution that can be deployed in any AWS account with proper permissions. The architecture balances security, cost-effectiveness, and maintainability while providing enterprise-grade features.
 
-The implementation provides a solid foundation that can be extended with additional features like conversation history, user management interfaces, and advanced security controls.
+**Key Success Factors**:
+- Proper AWS account setup with required permissions
+- Bedrock model access approval
+- GitHub Actions configuration with OIDC
+- Strong security controls and monitoring
+
+The solution is designed to scale from development to production environments with minimal configuration changes.
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: September 30, 2025  
-**Implementation Status**: Complete and Tested
+**Document Version**: 2.0  
+**Last Updated**: October 1, 2025  
+**Architecture Status**: Production Ready with Enhanced Security

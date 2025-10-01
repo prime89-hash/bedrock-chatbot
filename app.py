@@ -62,7 +62,8 @@ def query_bedrock(language, freeform_text):
         return response['output']['message']['content'][0]['text']
     except Exception as e:
         logger.error(f"Bedrock error: {str(e)}")
-        return "I'm experiencing technical difficulties. Please try again in a moment."
+        # Show actual error for debugging
+        return f"Debug Error: {str(e)}"
 
 # Health check endpoint for ALB
 if st.query_params.get("health") == "check":

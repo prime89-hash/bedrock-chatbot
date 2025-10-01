@@ -42,7 +42,7 @@ resource "aws_iam_role" "ecs_bedrock_task_role" {
 
 resource "aws_iam_policy" "bedrock_access_policy" {
   name        = "BedrockAccessPolicy"
-  description = "Policy to allow access to specific Bedrock models"
+  description = "Policy to allow access to Amazon Bedrock"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -50,17 +50,12 @@ resource "aws_iam_policy" "bedrock_access_policy" {
       {
         Action = [
           "bedrock:InvokeModel",
-          "bedrock:Converse"
-        ]
-        Effect = "Allow"
-        Resource = [
-          "arn:aws:bedrock:${var.aws_region}::foundation-model/anthropic.claude-*",
-          "arn:aws:bedrock:${var.aws_region}:*:inference-profile/us.anthropic.claude-sonnet-4-*"
-        ]
-      },
-      {
-        Action = [
-          "bedrock:ListFoundationModels"
+          "bedrock:Converse",
+          "bedrock:ListModels",
+          "bedrock:GetModel",
+          "bedrock:DescribeModel",
+          "bedrock:ListFoundationModels",
+          "bedrock:InvokeModelWithResponseStream"
         ]
         Effect   = "Allow"
         Resource = "*"

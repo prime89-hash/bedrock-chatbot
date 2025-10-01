@@ -2,15 +2,22 @@ resource "aws_cognito_user_pool" "bedrock_user_pool" {
   name = "bedrock-chatbot-users"
 
   password_policy {
-    minimum_length    = 8
+    minimum_length    = 12
     require_lowercase = true
     require_numbers   = true
-    require_symbols   = false
+    require_symbols   = true
     require_uppercase = true
   }
 
   admin_create_user_config {
-    allow_admin_create_user_only = false
+    allow_admin_create_user_only = true
+  }
+
+  account_recovery_setting {
+    recovery_mechanism {
+      name     = "verified_email"
+      priority = 1
+    }
   }
 
   tags = {
@@ -35,6 +42,16 @@ resource "aws_cognito_user_pool_client" "bedrock_client" {
     "ALLOW_USER_PASSWORD_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH"
   ]
+
+  token_validity_units {
+    access_token  = "hours"
+    id_token      = "hours"
+    refresh_token = "days"
+  }
+
+  access_token_validity  = 1
+  id_token_validity      = 1
+  refresh_token_validity = 7
 }
 
 resource "aws_cognito_user_pool_domain" "bedrock_domain" {

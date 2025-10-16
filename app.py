@@ -77,7 +77,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 st.title("🤖 Secure Bedrock Chatbot")
-st.markdown("*Powered by Claude Sonnet 4 with Enterprise Security*")
+st.markdown("*Powered by Claude Sonnet with Enterprise Security*")
 
 # Sidebar configuration
 with st.sidebar:

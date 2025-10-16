@@ -83,7 +83,7 @@ This document provides detailed requirements for setting up the Secure Bedrock C
 
 #### **Amazon Bedrock**
 - **Model Access**: Must request access to Claude Sonnet 4 in Bedrock console
-- **Regions**: Currently available in us-west-2, us-east-1, eu-west-1
+- **Regions**: Currently available in eu-west-2, us-east-1, eu-west-1
 - **Permissions**: InvokeModel, Converse, ListFoundationModels
 
 #### **Amazon ECS/Fargate**
@@ -114,7 +114,7 @@ This document provides detailed requirements for setting up the Secure Bedrock C
 #### **1.1 Enable Required Regions**
 ```bash
 # Verify Bedrock availability
-aws bedrock list-foundation-models --region us-west-2
+aws bedrock list-foundation-models --region eu-west-2
 aws bedrock list-foundation-models --region us-east-1
 ```
 
@@ -131,7 +131,7 @@ aws bedrock list-foundation-models --region us-east-1
 ```bash
 aws bedrock list-foundation-models \
   --by-provider anthropic \
-  --region us-west-2 \
+  --region eu-west-2 \
   --query 'modelSummaries[?contains(modelId, `claude`)].[modelId,modelName]' \
   --output table
 ```
@@ -227,7 +227,7 @@ aws service-quotas request-service-quota-increase \
 #### **4.1 Check Available AZs**
 ```bash
 aws ec2 describe-availability-zones \
-  --region us-west-2 \
+  --region eu-west-2 \
   --query 'AvailabilityZones[?State==`available`].[ZoneName,ZoneId]' \
   --output table
 ```
@@ -270,7 +270,7 @@ aws configservice put-configuration-recorder \
 #### **Cost Optimization**
 ```hcl
 # terraform/terraform.tfvars for development
-aws_region = "us-west-2"
+aws_region = "eu-west-2"
 environment = "dev"
 enable_nat_gateway = false  # Use single NAT for cost savings
 log_retention_days = 7      # Shorter retention
@@ -287,7 +287,7 @@ desired_capacity = 1        # Single task
 #### **High Availability Configuration**
 ```hcl
 # terraform/terraform.tfvars for production
-aws_region = "us-west-2"
+aws_region = "eu-west-2"
 environment = "prod"
 enable_nat_gateway = true   # Multi-AZ NAT gateways
 log_retention_days = 90     # Extended retention
@@ -375,7 +375,7 @@ aws bedrock converse --model-id us.anthropic.claude-sonnet-4-20250514-v1:0 --mes
 #### **Bedrock Access Denied**
 ```bash
 # Check model access status
-aws bedrock list-foundation-models --region us-west-2 --query 'modelSummaries[?contains(modelId, `claude-sonnet-4`)]'
+aws bedrock list-foundation-models --region eu-west-2 --query 'modelSummaries[?contains(modelId, `claude-sonnet-4`)]'
 
 # If empty, request access in Bedrock console
 ```

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 # Create Bedrock client
 bedrock_client = boto3.client(
     service_name="bedrock-runtime",
-    region_name=os.getenv("BEDROCK_REGION", "us-west-2")
+    region_name=os.getenv("BEDROCK_REGION", "eu-west-2")
 )
 
 # Model ID (Claude Sonnet 4 Inference Profile)

@@ -121,7 +121,7 @@ Internet → ALB (HTTPS + Cognito Auth) → ECS Fargate (Private) → NAT Gatewa
 #### **1.1 Enable Required Services**
 ```bash
 # Check if Bedrock is available in your region
-aws bedrock list-foundation-models --region us-west-2
+aws bedrock list-foundation-models --region eu-west-2
 
 # Enable Bedrock model access (must be done in console)
 # Go to AWS Bedrock Console → Model Access → Request Access for Claude models
@@ -169,7 +169,7 @@ Go to GitHub repository → Settings → Secrets and variables → Actions
 #### **2.3 Update Configuration**
 Edit `terraform/terraform.tfvars`:
 ```hcl
-aws_region = "us-west-2"  # Change if needed
+aws_region = "eu-west-2"  # Change if needed
 image_tag = "latest"
 container_port = 8501
 vpc_cidr = "10.0.0.0/16"
@@ -190,7 +190,7 @@ private_subnet_cidr = ["10.0.3.0/24", "10.0.4.0/24"]
 ```bash
 aws bedrock list-foundation-models \
   --by-provider anthropic \
-  --region us-west-2 \
+  --region eu-west-2 \
   --query 'modelSummaries[?contains(modelId, `claude-sonnet-4`)]'
 ```
 
@@ -234,19 +234,19 @@ aws cognito-idp admin-create-user \
   --username admin \
   --user-attributes Name=email,Value=admin@example.com Name=email_verified,Value=true \
   --message-action SUPPRESS \
-  --region us-west-2
+  --region eu-west-2
 
 aws cognito-idp admin-set-user-password \
   --user-pool-id $USER_POOL_ID \
   --username admin \
   --password "SecureAdmin2025!@#" \
   --permanent \
-  --region us-west-2
+  --region eu-west-2
 
 aws cognito-idp admin-confirm-sign-up \
   --user-pool-id $USER_POOL_ID \
   --username admin \
-  --region us-west-2
+  --region eu-west-2
 ```
 
 ## 🔧 Configuration Details
@@ -286,7 +286,7 @@ aws cognito-idp admin-confirm-sign-up \
 
 ## 💰 Cost Analysis for New Account
 
-### Monthly Costs (US-West-2)
+### Monthly Costs (eu-west-2)
 
 | Service | Configuration | Monthly Cost |
 |---------|---------------|--------------|
@@ -336,10 +336,10 @@ aws cognito-idp admin-confirm-sign-up \
 **Solutions**:
 ```bash
 # Check model access status
-aws bedrock get-model-invocation-logging-configuration --region us-west-2
+aws bedrock get-model-invocation-logging-configuration --region eu-west-2
 
 # List available models
-aws bedrock list-foundation-models --region us-west-2
+aws bedrock list-foundation-models --region eu-west-2
 ```
 
 ### Network Issues
@@ -412,13 +412,13 @@ aws bedrock list-foundation-models --region us-west-2
 
 ```bash
 # View application logs
-aws logs tail /aws/ecs/bedrock-chatbot --follow --region us-west-2
+aws logs tail /aws/ecs/bedrock-chatbot --follow --region eu-west-2
 
 # Check ECS service health
-aws ecs describe-services --cluster bedrock-ecs-cluster --services bedrock-chatbot-service --region us-west-2
+aws ecs describe-services --cluster bedrock-ecs-cluster --services bedrock-chatbot-service --region eu-west-2
 
 # Monitor ALB metrics
-aws cloudwatch get-metric-statistics --namespace AWS/ApplicationELB --metric-name RequestCount --dimensions Name=LoadBalancer,Value=app/bedrock-alb/xxx --start-time 2025-01-01T00:00:00Z --end-time 2025-01-01T01:00:00Z --period 300 --statistics Sum --region us-west-2
+aws cloudwatch get-metric-statistics --namespace AWS/ApplicationELB --metric-name RequestCount --dimensions Name=LoadBalancer,Value=app/bedrock-alb/xxx --start-time 2025-01-01T00:00:00Z --end-time 2025-01-01T01:00:00Z --period 300 --statistics Sum --region eu-west-2
 ```
 
 ## 🎉 Conclusion

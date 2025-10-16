@@ -16,7 +16,7 @@ terraform {
 
 terraform {
   backend "s3" {
-    bucket         = "bedrock-statefile-store"   #  S3 bucket name
+    bucket         = "my-bedrock-chatbot-tf-state"   #  S3 bucket name
     key            = "terraform/state.tfstate"       # Path inside the bucket
     region         = "us-west-2"                     #  AWS region
     #profile        = "bedrockuser1"

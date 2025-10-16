@@ -15,7 +15,7 @@ bedrock_client = boto3.client(
 )
 
 # Model ID (Claude Sonnet 4 Inference Profile)
-model_id = "us.anthropic.claude-sonnet-4-20250514-v1:0"
+model_id = "anthropic.claude-sonnet-4-5-20250929-v1:0"
 
 def validate_input(text):
     """Validate and sanitize user input"""

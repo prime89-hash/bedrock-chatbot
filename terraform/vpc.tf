@@ -101,3 +101,14 @@ resource "aws_route_table_association" "private_subnet_association" {
   subnet_id      = aws_subnet.private_subnet[count.index].id
   route_table_id = aws_route_table.private_rt[count.index].id
 }
+
+resource "aws_flow_log" "vpc_flowlog_bedrock" {
+  iam_role_arn    = aws_iam_role.vpc_flow_log_role.arn
+  log_destination = aws_cloudwatch_log_group.vpc_flow_log_group.arn
+  traffic_type    = "ALL"
+  vpc_id          = aws_vpc.bedrock_main.id
+
+  tags = {
+    Name = "bedrock-vpc-flow-logs"
+  }
+}
